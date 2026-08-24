@@ -1,0 +1,2 @@
+import {describe,it,expect} from 'vitest'; import {SEARCH_TTL_MS,DETAIL_TTL_MS} from '../src/anilist';
+describe('AniList cache policy',()=>{it('uses the approved TTLs',()=>{expect(SEARCH_TTL_MS).toBe(15*60*1000);expect(DETAIL_TTL_MS).toBe(24*60*60*1000)});it('keeps search providers auth-free',()=>{expect('https://graphql.anilist.co').not.toContain('apiKey');expect('https://api.jikan.moe/v4/anime').not.toContain('apiKey')})});

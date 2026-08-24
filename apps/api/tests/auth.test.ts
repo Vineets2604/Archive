@@ -1,0 +1,2 @@
+import {describe,it,expect} from 'vitest'; import {hashPassword,comparePassword,signToken,verifyToken} from '../src/auth';
+describe('auth primitives',()=>{it('hashes and verifies passwords',async()=>{const h=await hashPassword('password123');expect(h).not.toBe('password123');expect(await comparePassword('password123',h)).toBe(true);expect(await comparePassword('wrong',h)).toBe(false)});it('round trips JWT subject',()=>expect(verifyToken(signToken('user-1')).sub).toBe('user-1'))});

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum WatchStatus {
+  watching
+  completed
+  dropped
+  plan_to_watch
+}
+enum ActivityType {
+  review_created
+  portfolio_added
+  followed_user
+}
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  username String @unique
+  passwordHash String
+  bio String @default("")
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  portfolio PortfolioEntry[]
+  reviews Review[]
+  followers Follow[] @relation("user_followers")
+  following Follow[] @relation("user_following")
+  activities Activity[]
+  reviewLikes ReviewLike[]
+  customLists CustomList[]
+}
+model Anime {
+  id String @id @default(cuid())
+  anilistId Int @unique
+  titleRomaji String?
+  titleEnglish String?
+  titleNative String?
+  coverImage String?
+  bannerImage String?
+  synopsis String?
+  genres String[]
+  studio String?
+  episodeCount Int?
+  anilistScore Float?
+  cachedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  portfolio PortfolioEntry[]
+  reviews Review[]
+  listItems CustomListItem[]
+}
+model PortfolioEntry {
+  id String @id @default(cuid())
+  userId String
+  animeId String
+  status WatchStatus
+  personalRating Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  @@unique([userId, animeId])
+}
+model Review {
+  id String @id @default(cuid())
+  userId String
+  animeId String
+  rating Int
+  body String
+  containsSpoilers Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  likes ReviewLike[]
+  @@unique([userId, animeId])
+}
+model ReviewLike {
+  id String @id @default(cuid())
+  userId String
+  reviewId String
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  @@unique([userId, reviewId])
+  @@index([reviewId])
+}
+model CustomList {
+  id String @id @default(cuid())
+  userId String
+  name String
+  description String @default("")
+  isPublic Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CustomListItem[]
+  @@index([userId, createdAt])
+}
+model CustomListItem {
+  id String @id @default(cuid())
+  listId String
+  animeId String
+  note String @default("")
+  addedAt DateTime @default(now())
+  list CustomList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  anime Anime @relation(fields: [animeId], references: [id], onDelete: Cascade)
+  @@unique([listId, animeId])
+  @@index([animeId])
+}
+model Follow {
+  id String @id @default(cuid())
+  followerId String
+  followingId String
+  createdAt DateTime @default(now())
+  follower User @relation("user_following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("user_followers", fields: [followingId], references: [id], onDelete: Cascade)
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+model Activity {
+  id String @id @default(cuid())
+  userId String
+  type ActivityType
+  targetId String
+  metadata Json
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, createdAt])
+  @@index([type, targetId])
+}
+model AnimeCache {
+  id String @id @default(cuid())
+  cacheKey String @unique
+  payload Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
